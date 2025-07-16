@@ -12,6 +12,10 @@ export const SUPABASE_CONFIG = {
   ANIMATION_SPEED: 200, // ms per character flip
   INITIAL_LOAD_LIMIT: 20, // Number of initial transcripts to load
   
+  // Multi-display configuration
+  DISPLAY_ID: parseInt(process.env.REACT_APP_DISPLAY_ID) || 1, // Which display this is (1, 2, or 3)
+  TOTAL_DISPLAYS: 3, // Total number of displays
+  
   // Real-time subscription settings
   REALTIME_CHANNEL: 'transcripts',
   

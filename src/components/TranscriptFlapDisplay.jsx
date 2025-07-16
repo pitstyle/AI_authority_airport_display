@@ -6,7 +6,9 @@ const TranscriptFlapDisplay = ({
   supabaseKey,
   animationSpeed = 100, // ms per character flip cycle
   readingTime = 11000, // 11 seconds to read each transcript
-  totalAnimationTime = 2000 // 2 seconds total for wave animation
+  totalAnimationTime = 2000, // 2 seconds total for wave animation
+  displayId = 1, // Which display this is (1, 2, or 3)
+  totalDisplays = 3 // Total number of displays
 }) => {
   const containerRef = useRef(null);
   const [, setSupabase] = useState(null);
@@ -22,9 +24,20 @@ const TranscriptFlapDisplay = ({
   const [isLooping, setIsLooping] = useState(false);
   const [gridDimensions, setGridDimensions] = useState({ charsPerRow: 0, totalRows: 0, totalFlaps: 0 });
   
-  // Character set for split-flap display - exactly like original
-  // const FLAP_CHARACTERS = 
-  //   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-=_~!@#$%^&*? ";
+  // Character set for split-flap display - with ALL Polish characters
+  const FLAP_CHARACTERS = 
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZĄŻĆĘŁŃÓŚŹŻ0123456789-=_~!@#$%^&*? .,:;";
+  
+  // Text sanitization function to filter out only problematic characters
+  const sanitizeText = (text) => {
+    return text
+      .toUpperCase()
+      .split('')
+      .map(char => FLAP_CHARACTERS.includes(char) ? char : ' ')
+      .join('')
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .trim();
+  };
   
   // Grid dimension constants
   const FLAP_WIDTH = 80;
@@ -94,13 +107,18 @@ const TranscriptFlapDisplay = ({
       if (error) throw error;
 
       if (data && data.length > 0) {
-        console.log(`Loading ${data.length} conversations`);
-        setConversations(data);
+        // Filter conversations based on display ID using time-based distribution
+        const filteredData = data.filter((conversation, index) => {
+          return index % totalDisplays === (displayId - 1);
+        });
+        
+        console.log(`Display ${displayId}: Loading ${filteredData.length} of ${data.length} conversations`);
+        setConversations(filteredData);
         
         // Process first conversation after a short delay to ensure grid is ready
         setTimeout(() => {
-          if (data[0]) {
-            processConversation(data[0]);
+          if (filteredData[0]) {
+            processConversation(filteredData[0]);
           }
         }, 100);
         
@@ -117,27 +135,54 @@ const TranscriptFlapDisplay = ({
   };
 
   const processConversation = (conversation) => {
-    if (!conversation || !conversation.full_transcript || !conversation.full_transcript.results) {
-      console.log('No transcript results found');
+    if (!conversation || !conversation.full_transcript) {
+      console.log('No transcript found');
       return;
     }
 
-    // Extract all messages and format them
-    const messages = conversation.full_transcript.results
-      .filter(msg => msg.text) // Only messages with text
-      .map(msg => `${msg.speaker_label}: ${msg.text}`);
+    let messages = [];
     
-    if (messages.length === 0) {
+    // Handle different transcript formats
+    if (conversation.full_transcript.results && Array.isArray(conversation.full_transcript.results)) {
+      // Standard format with results array
+      messages = conversation.full_transcript.results
+        .filter(msg => msg.text && typeof msg.text === 'string')
+        .map(msg => {
+          const speaker = msg.speaker_label || msg.speaker || 'SPEAKER';
+          const text = msg.text.trim();
+          return `${speaker}: ${text}`;
+        });
+    } else if (typeof conversation.full_transcript === 'string') {
+      // Plain text format
+      messages = [conversation.full_transcript];
+    } else if (conversation.full_transcript.text) {
+      // Single text field
+      messages = [conversation.full_transcript.text];
+    }
+    
+    // Additional cleaning: remove JSON artifacts that might slip through
+    const cleanedMessages = messages.map(msg => {
+      return msg
+        .replace(/\{[^}]*\}/g, '') // Remove JSON objects
+        .replace(/\[[^\]]*\]/g, '') // Remove JSON arrays  
+        .replace(/"[^"]*":/g, '') // Remove JSON keys
+        .replace(/,\s*,/g, ',') // Clean up double commas
+        .replace(/^\s*[,:]|[,:]\s*$/g, '') // Remove leading/trailing punctuation
+        .trim();
+    }).filter(msg => msg.length > 0);
+    
+    if (cleanedMessages.length === 0) {
       console.log('No valid messages found in conversation');
       return;
     }
     
-    // Break into screen-sized chunks
-    const chunks = breakIntoChunks(messages.join(' '));
+    // Break into screen-sized chunks with sanitized text
+    const fullText = cleanedMessages.join(' ');
+    const chunks = breakIntoChunks(sanitizeText(fullText));
     setCurrentChunks(chunks);
     setCurrentChunkIndex(0);
     
-    console.log(`Processed conversation: ${chunks.length} chunks`);
+    console.log(`Processed conversation: ${chunks.length} chunks from ${cleanedMessages.length} messages`);
   };
 
   const breakIntoChunks = (fullText) => {
@@ -166,7 +211,15 @@ const TranscriptFlapDisplay = ({
         console.log('Conversation updated:', payload.new);
         // Add new conversation to the beginning of the list
         if (payload.new.full_transcript) {
-          setConversations(prev => [payload.new, ...prev]);
+          setConversations(prev => {
+            // Add to the list and re-filter based on display ID
+            const newList = [payload.new, ...prev];
+            const filteredList = newList.filter((conversation, index) => {
+              return index % totalDisplays === (displayId - 1);
+            });
+            console.log(`Display ${displayId}: Updated conversation list, showing ${filteredList.length} conversations`);
+            return filteredList;
+          });
         }
       })
       .subscribe((status) => {
@@ -182,8 +235,8 @@ const TranscriptFlapDisplay = ({
   };
 
   const displayText = (text) => {
-    // Add complete text chunks to queue
-    setTextQueue(prev => [...prev, text.toUpperCase()]);
+    // Add complete text chunks to queue with sanitization
+    setTextQueue(prev => [...prev, sanitizeText(text)]);
   };
 
   // Process text queue (legacy - keeping for compatibility)
@@ -425,7 +478,7 @@ const TranscriptFlapDisplay = ({
     
     // Show initial message only if not connected
     if (!isConnected) {
-      displayText('SYSTEM READY - CONNECTING...');
+      displayText(`DISPLAY ${displayId} - CONNECTING...`);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -523,6 +576,7 @@ const TranscriptFlapDisplay = ({
           border: 2px solid black;
           margin: 2px;
           font-size: 60px;
+          font-family: "Impact", "Arial Black", sans-serif;
           flex-direction: column;
           display: flex;
           background-color: black;

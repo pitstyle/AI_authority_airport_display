@@ -97,6 +97,8 @@ function App() {
       supabaseUrl={SUPABASE_CONFIG.URL}
       supabaseKey={SUPABASE_CONFIG.ANON_KEY}
       animationSpeed={SUPABASE_CONFIG.ANIMATION_SPEED}
+      displayId={SUPABASE_CONFIG.DISPLAY_ID}
+      totalDisplays={SUPABASE_CONFIG.TOTAL_DISPLAYS}
     />
   );
 }
