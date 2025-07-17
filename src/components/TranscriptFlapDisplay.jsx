@@ -8,7 +8,8 @@ const TranscriptFlapDisplay = ({
   readingTime = 11000, // 11 seconds to read each transcript
   totalAnimationTime = 2000, // 2 seconds total for wave animation
   displayId = 1, // Which display this is (1, 2, or 3)
-  totalDisplays = 3 // Total number of displays
+  totalDisplays = 3, // Total number of displays
+  displayScale = 1.0 // Scale factor for display size
 }) => {
   const containerRef = useRef(null);
   const [, setSupabase] = useState(null);
@@ -39,12 +40,12 @@ const TranscriptFlapDisplay = ({
       .trim();
   };
   
-  // Grid dimension constants
-  const FLAP_WIDTH = 80;
-  const FLAP_HEIGHT = 85;
-  const FLAP_MARGIN = 4; // 2px on each side
-  const CONTAINER_PADDING = 20; // Container padding
-  const WRAPPER_PADDING = 10; // Split-flap-wrapper padding
+  // Grid dimension constants (scaled)
+  const FLAP_WIDTH = 80 * displayScale;
+  const FLAP_HEIGHT = 85 * displayScale;
+  const FLAP_MARGIN = 4 * displayScale; // 2px on each side
+  const CONTAINER_PADDING = 20 * displayScale; // Container padding
+  const WRAPPER_PADDING = 10 * displayScale; // Split-flap-wrapper padding
 
   // Calculate grid dimensions based on current viewport
   const calculateGridDimensions = () => {
@@ -520,6 +521,7 @@ const TranscriptFlapDisplay = ({
           box-sizing: border-box;
           padding: 0px;
           margin: 0px;
+          cursor: none !important;
         }
         
         body, html {
@@ -529,6 +531,7 @@ const TranscriptFlapDisplay = ({
           display: flex;
           justify-content: center;
           align-items: center;
+          cursor: none !important;
         }
         
         .transcript-split-flap-container {
@@ -571,26 +574,26 @@ const TranscriptFlapDisplay = ({
         }
         
         .flap {
-          width: 80px;
-          height: 85px;
-          border: 2px solid black;
-          margin: 2px;
-          font-size: 60px;
+          width: ${FLAP_WIDTH}px;
+          height: ${FLAP_HEIGHT}px;
+          border: ${2 * displayScale}px solid black;
+          margin: ${2 * displayScale}px;
+          font-size: ${60 * displayScale}px;
           font-family: "Impact", "Arial Black", sans-serif;
           flex-direction: column;
           display: flex;
           background-color: black;
-          perspective: 700px;
+          perspective: ${700 * displayScale}px;
           overflow: hidden;
-          border-radius: 4px;
-          box-shadow: inset 2px 2px #111111;
-          padding: 4px;
+          border-radius: ${4 * displayScale}px;
+          box-shadow: inset ${2 * displayScale}px ${2 * displayScale}px #111111;
+          padding: ${4 * displayScale}px;
           flex-shrink: 0;
         }
         
         .top {
-          border-bottom: 1px solid #222222;
-          box-shadow: inset 0px -1px white;
+          border-bottom: ${1 * displayScale}px solid #222222;
+          box-shadow: inset 0px ${-1 * displayScale}px white;
           width: 100%;
           height: 50%;
           text-align: center;
@@ -617,8 +620,8 @@ const TranscriptFlapDisplay = ({
           width: 100%;
           background-color: rgb(10,10,10);
           z-index: 2;
-          border-radius: 15px;
-          border-top: 1px solid #333333;
+          border-radius: ${15 * displayScale}px;
+          border-top: ${1 * displayScale}px solid #333333;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -639,8 +642,8 @@ const TranscriptFlapDisplay = ({
           background: radial-gradient(#404040, black);
           z-index: 1;
           overflow: hidden;
-          border-radius: 15px;
-          border-bottom: 1px solid #333333;
+          border-radius: ${15 * displayScale}px;
+          border-bottom: ${1 * displayScale}px solid #333333;
           display: flex;
           align-items: center;
           justify-content: center;

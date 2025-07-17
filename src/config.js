@@ -15,6 +15,7 @@ export const SUPABASE_CONFIG = {
   // Multi-display configuration
   DISPLAY_ID: parseInt(process.env.REACT_APP_DISPLAY_ID) || 1, // Which display this is (1, 2, or 3)
   TOTAL_DISPLAYS: 3, // Total number of displays
+  DISPLAY_SCALE: parseFloat(process.env.REACT_APP_DISPLAY_SCALE) || 1.0, // Scale factor for display size
   
   // Real-time subscription settings
   REALTIME_CHANNEL: 'transcripts',

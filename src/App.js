@@ -99,6 +99,7 @@ function App() {
       animationSpeed={SUPABASE_CONFIG.ANIMATION_SPEED}
       displayId={SUPABASE_CONFIG.DISPLAY_ID}
       totalDisplays={SUPABASE_CONFIG.TOTAL_DISPLAYS}
+      displayScale={SUPABASE_CONFIG.DISPLAY_SCALE}
     />
   );
 }
