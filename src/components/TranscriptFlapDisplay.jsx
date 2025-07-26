@@ -109,11 +109,12 @@ const TranscriptFlapDisplay = ({
 
       if (data && data.length > 0) {
         // Filter conversations based on display ID using time-based distribution
-        const filteredData = data.filter((conversation, index) => {
+        // For single display mode (totalDisplays = 1), show all conversations
+        const filteredData = totalDisplays === 1 ? data : data.filter((conversation, index) => {
           return index % totalDisplays === (displayId - 1);
         });
         
-        console.log(`Display ${displayId}: Loading ${filteredData.length} of ${data.length} conversations`);
+        console.log(`Display ${displayId}: Loading ${filteredData.length} of ${data.length} conversations (${totalDisplays === 1 ? 'single display mode' : 'multi-display mode'})`);
         setConversations(filteredData);
         
         // Process first conversation after a short delay to ensure grid is ready
@@ -214,11 +215,12 @@ const TranscriptFlapDisplay = ({
         if (payload.new.full_transcript) {
           setConversations(prev => {
             // Add to the list and re-filter based on display ID
+            // For single display mode (totalDisplays = 1), show all conversations
             const newList = [payload.new, ...prev];
-            const filteredList = newList.filter((conversation, index) => {
+            const filteredList = totalDisplays === 1 ? newList : newList.filter((conversation, index) => {
               return index % totalDisplays === (displayId - 1);
             });
-            console.log(`Display ${displayId}: Updated conversation list, showing ${filteredList.length} conversations`);
+            console.log(`Display ${displayId}: Updated conversation list, showing ${filteredList.length} conversations (${totalDisplays === 1 ? 'single display mode' : 'multi-display mode'})`);
             return filteredList;
           });
         }
